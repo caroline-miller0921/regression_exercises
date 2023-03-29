@@ -117,7 +117,7 @@ def get_box(df):
 
 def get_count(df):
 
-    plt.figure(figsize=(16, 3))
+    plt.figure(figsize=(16, 10))
 
     sns.countplot(data=df, x='fips_location', palette='magma')
     plt.xlabel('County Name')
