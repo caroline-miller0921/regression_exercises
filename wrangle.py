@@ -6,7 +6,7 @@ import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
-
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler, QuantileTransformer
 
 def get_zillow_2017():
     '''
@@ -177,3 +177,55 @@ def wrangle_zillow():
     train, validate, test = prepare_zillow(get_zillow_2017())
 
     return train, validate, test
+
+def scale_and_vis(scaler, X, columns):
+    X_scaled = X.copy()
+    X_scaled[columns] = scaler.fit_transform(X_scaled[columns])
+
+    fig, axs = plt.subplots(len(columns), 2, figsize=(16, 11))
+    for (ax1, ax2), col in zip(axs, columns):
+
+        ax1.hist(X[col])
+        ax1.set(title=f'Distribution of Unscaled {col}', xlabel=f'Value of {col}', ylabel=f'Count of {col}')
+
+        ax2.hist(X_scaled[col])
+        ax2.set(title=f'Distribution of Scaled {col}', xlabel=f'Value of {col}', ylabel=f'Count of {col}')
+    
+    fig.suptitle(f'Scaling Visualization for {scaler}', fontsize=16)
+    
+    plt.tight_layout()
+    plt.show()
+
+def scale_data(train, 
+               validate, 
+               test, 
+               columns_to_scale=['bedrooms', 'bathrooms', 'squarefeet', 'yearbuilt', 'taxamount'],
+               return_scaler=False):
+    '''
+    Scales the 3 data splits. 
+    Takes in train, validate, and test data splits and returns their scaled counterparts.
+    If return_scalar is True, the scaler object will be returned as well
+    '''
+    # make copies of our original data so we dont gronk up anything
+    train_scaled = train.copy()
+    validate_scaled = validate.copy()
+    test_scaled = test.copy()
+    #     make the thing
+    scaler = MinMaxScaler()
+    #     fit the thing
+    scaler.fit(train[columns_to_scale])
+    # applying the scaler:
+    train_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(train[columns_to_scale]),
+                                                  columns=train[columns_to_scale].columns.values, 
+                                                  index = train.index)
+                                                  
+    validate_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(validate[columns_to_scale]),
+                                                  columns=validate[columns_to_scale].columns.values).set_index([validate.index.values])
+    
+    test_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(test[columns_to_scale]),
+                                                 columns=test[columns_to_scale].columns.values).set_index([test.index.values])
+    
+    if return_scaler:
+        return scaler, train_scaled, validate_scaled, test_scaled
+    else:
+        return train_scaled, validate_scaled, test_scaled
