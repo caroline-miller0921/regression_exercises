@@ -16,6 +16,16 @@ import wrangle
 import warnings
 warnings.filterwarnings('ignore')
 
+def plot_model_preds(X_train, feature, y, yhat, target):
+
+    plt.scatter(X_train[[f'{feature}']], y, color='magenta')
+
+    plt.plot(X_train[[f'{feature}']], yhat, color='black')
+    plt.title(f'Linear Regression Model (feature = {feature})')
+    plt.xlabel(f'{feature}')
+    plt.ylabel(f'Target variable: {target}')
+    plt.show()
+
 
 def plot_residuals(y, yhat):
     '''
