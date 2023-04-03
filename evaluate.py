@@ -32,7 +32,7 @@ def plot_residuals(y, yhat):
 def regression_errors(y, yhat):
 
     SSE = mean_squared_error(y, yhat)*len(y)
-    ESS = sum((yhat - y.mean()) ** 2)
+    ESS = sum((yhat - (y.mean())) ** 2)
     TSS = SSE + ESS
     MSE = mean_squared_error(y, yhat)
     RMSE = sqrt(MSE)
