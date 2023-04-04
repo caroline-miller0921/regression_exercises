@@ -7,6 +7,9 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler, QuantileTransformer
+from sklearn.feature_selection import SelectKBest, RFE, f_regression, SequentialFeatureSelector
+from sklearn.linear_model import LinearRegression
+
 
 def get_zillow_2017():
     '''
@@ -229,3 +232,110 @@ def scale_data(train,
         return scaler, train_scaled, validate_scaled, test_scaled
     else:
         return train_scaled, validate_scaled, test_scaled
+    
+def rfe(X, y, n):
+    model = LinearRegression()
+    rfe = RFE(model, n_features_to_select=n)
+    rfe.fit(X, y)
+    
+    rfe_df = pd.DataFrame(
+    {
+        'feature_ranking': [*rfe.ranking_],
+        'selected': [*rfe.get_support()]
+    }, index = X.columns
+    )
+    
+    cols = []
+    
+    cols = [*X.columns[rfe.get_support()]]
+    
+    print(f'The {n} features selected are as follows:\n {cols}')
+    
+    return rfe_df
+
+def select_kbest(X, y, k):
+    kbest =  SelectKBest(f_regression, k=k)
+    
+    _ = kbest.fit(X, y)
+    
+    kbest_df = pd.DataFrame(
+    {
+        'statistical_f_values': [*kbest.scores_],
+        'p_values': [*kbest.pvalues_],
+        'selected': [*kbest.get_support()]
+    }, index = X.columns
+    )
+    
+    cols = []
+    
+    cols = [*X.columns[kbest.get_support()]]
+    
+    print(f'The features selected with the k value set to {k} are as follows:\n {cols}')
+    
+    return kbest_df
+
+def bivariate_visulization(df, target):
+    
+    cat_cols, num_cols = [], []
+    
+    for col in df.columns:
+        if df[col].dtype == "o":
+            cat_cols.append(col)
+        else:
+            if df[col].nunique() < 10:
+                cat_cols.append(col)
+            else: 
+                num_cols.append(col)
+                
+    print(f'Numeric Columns: {num_cols}')
+    print(f'Categorical Columns: {cat_cols}')
+    explore_cols = cat_cols + num_cols
+
+    for col in explore_cols:
+        if col in cat_cols:
+            if col != target:
+                print(f'Bivariate assessment of feature {col}:')
+                sns.barplot(data = df, x = df[col], y = df[target], palette='crest')
+                plt.show()
+
+        if col in num_cols:
+            if col != target:
+                print(f'Bivariate feature analysis of feature {col}: ')
+                plt.scatter(x = df[col], y = df[target], color='turquoise')
+                plt.axhline(df[target].mean(), ls=':', color='red')
+                plt.axvline(df[col].mean(), ls=':', color='red')
+                plt.show()
+
+    print('_____________________________________________________')
+    print('_____________________________________________________')
+    print()
+
+def univariate_visulization(df):
+    
+    cat_cols, num_cols = [], []
+    for col in df.columns:
+        if df[col].dtype == "o":
+            cat_cols.append(col)
+        else:
+            if df[col].nunique() < 5:
+                cat_cols.append(col)
+            else: 
+                num_cols.append(col)
+                
+    explore_cols = cat_cols + num_cols
+
+    for col in explore_cols:
+        
+        if col in cat_cols:
+            print(f'Univariate assessment of feature {col}:')
+            sns.countplot(data=df, x=col, color='violet', edgecolor='black')
+            plt.show()
+
+        if col in num_cols:
+            print(f'Univariate feature analysis of feature {col}: ')
+            plt.hist(df[col], color='violet', edgecolor='black')
+            plt.show()
+            df[col].describe()
+    print('_____________________________________________________')
+    print('_____________________________________________________')
+    print()
